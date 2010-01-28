@@ -17,4 +17,26 @@ override_request
 		return [200, [], IO::String->new("some\nwords\n")];
 	};
 
+# PSGI headers
+override_request
+	host => 'localhost',
+	path => 'headers.psgi',
+	sub {
+		my @headers = (
+			'X-PSGI-Test' => 'header',
+			'X-PSGI-Test' => 'header2',
+			'Vary'        => 'something',
+		);
+
+		return [200, \@headers, []];
+	};
+
+# PSGI status
+override_request
+	host => 'localhost',
+	path => 'status.psgi',
+	sub {
+		return [shift->uri->query, [], []];
+	};
+
 1;
