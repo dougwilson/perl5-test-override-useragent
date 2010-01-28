@@ -227,6 +227,9 @@ sub _convert_psgi_response {
 					# Push the line into the body
 					push @{$body}, $line;
 				}
+
+				# Close the file
+				$fh->close;
 			}
 
 			# Create the response object
