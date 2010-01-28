@@ -82,6 +82,17 @@ sub override_request {
 	# Enable chaining
 	return $self;
 }
+sub uninstall_from_user_agent {
+	my ($self, $user_agent) = @_;
+
+	# Remove our handlers from the user agent
+	$user_agent->remove_handler(
+		owner => Scalar::Util::refaddr($self),
+	);
+
+	# Return the user agent for some reason
+	return $user_agent;
+}
 
 ###########################################################################
 # STATIC METHODS
@@ -342,6 +353,12 @@ argument. The subroutine must function as specified in L</HANDLER SUBROUTINE>.
 =item scheme
 
 =back
+
+=head2 uninstall_from_user_agent
+
+This method will remove the handlers belonging to this configuration from
+the specified user agent. The first argument is the user agent to remove
+the handlers from.
 
 =head1 HANDLER SUBROUTINE
 
