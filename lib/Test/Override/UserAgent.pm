@@ -12,8 +12,10 @@ our $VERSION   = '0.001';
 ###########################################################################
 # MODULE IMPORTS
 use Carp qw(croak);
+use HTTP::Date ();
 use HTTP::Headers;
 use HTTP::Response;
+use HTTP::Status 5.817 ();
 use LWP::UserAgent; # Not actually required here, but want it to be loaded
 use Scalar::Util;
 use Sub::Install 0.90;
@@ -171,6 +173,24 @@ sub _get_handler_for {
 
 	return $handler;
 }
+sub _new_internal_response {
+	my ($code, $message) = @_;
+
+	# Make a new response
+	my $response = HTTP::Response->new($code, $message);
+
+	# Set some headers for client information
+	$response->headers(
+		'Client-Date'    => HTTP::Date::time2str(time),
+		'Client-Warning' => 'Internal response',
+		'Content-Type'   => 'text/plain',
+	);
+
+	# Set the content as the status_line
+	$response->content("$code $message");
+
+	return $response;
+}
 sub _register_handler {
 	my ($self, $handler, %args) = @_;
 
@@ -247,6 +267,13 @@ sub _convert_psgi_response {
 			# Create the response object
 			$response = HTTP::Response->new(
 				$status_code, undef, $headers, join q{}, @{$body});
+		}
+		else {
+			# Bad return value from handler
+			$response = _new_internal_response(
+				HTTP::Status::HTTP_EXPECTATION_FAILED,
+				'Override handler returned invalid value: ' . $response
+			);
 		}
 	}
 
