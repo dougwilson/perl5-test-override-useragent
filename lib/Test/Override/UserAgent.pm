@@ -87,7 +87,7 @@ sub uninstall_from_user_agent {
 
 	# Remove our handlers from the user agent
 	$user_agent->remove_handler(
-		undef, # All phases
+		'request_send',
 		owner => Scalar::Util::refaddr($self),
 	);
 
