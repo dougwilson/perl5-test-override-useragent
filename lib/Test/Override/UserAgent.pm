@@ -11,13 +11,77 @@ our $VERSION   = '0.001';
 
 ###########################################################################
 # MODULE IMPORTS
+use Carp qw(croak);
+use HTTP::Headers;
+use HTTP::Response;
 use LWP::UserAgent; # Not actually required here, but want it to be loaded
+use Scalar::Util;
 use Sub::Install 0.90;
 use Sub::Override;
+use URI;
 
 ###########################################################################
 # ALL IMPORTS BEFORE THIS WILL BE ERASED
 use namespace::clean 0.04 -except => [qw(meta)];
+
+###########################################################################
+# METHODS
+sub handle_request {
+	my ($self, $request) = @_;
+
+	# Lookup the handler for the request
+	my $handler = $self->_get_handler_for($request);
+
+	if (!defined $handler) {
+		# No handler defined for this request
+		return;
+	}
+
+	# Get the response
+	my $response = _convert_psgi_response($handler->($request));
+
+	if (!defined $response->request) {
+		# Set the request that made this response
+		$response->request($request);
+	}
+
+	return $response;
+}
+sub install_in_user_agent {
+	my ($self, $user_agent, %args) = @_;
+
+	# Get the clone argument
+	my $clone = exists $args{clone} ? $args{clone} : 0;
+
+	if ($clone) {
+		# Make a clone of the user agent
+		$user_agent = $user_agent->clone;
+	}
+
+	# Add as a handler in the user agent
+	$user_agent->add_handler(
+		request_send => sub { return $self->handle_request(shift); },
+		owner        => Scalar::Util::refaddr($self),
+	);
+
+	# Return the user agent
+	return $user_agent;
+}
+sub override_request {
+	my ($self, @args) = @_;
+
+	# Get the handler from the end
+	my $handler = pop @args;
+
+	# Convert the arguments into a hash
+	my %args = $self->_with_default_arguments(@args);
+
+	# Register the handler
+	$self->_register_handler($handler, %args);
+
+	# Enable chaining
+	return $self;
+}
 
 ###########################################################################
 # STATIC METHODS
@@ -28,15 +92,139 @@ sub import {
 	my $use_for = $args{for} || 'testing';
 
 	if ($use_for eq 'configuration') {
-		# The caller says it is a configuration module
+		# Create a new configuration object that will be wrapped in
+		# closures.
+		my $conf = $class->new;
+
 		Sub::Install::install_sub({
-			# Install handle_request
-			code => sub {}, # TODO: write this
-			as   => 'handle_request',
+			# Install override_request
+			code => sub { return $conf->override_request(@_); },
+			as   => 'override_request',
 		});
 	}
 
 	return;
+}
+
+###########################################################################
+# CONSTRUCTOR
+sub new {
+	my ($class, @args) = @_;
+
+	# Get the arguments as a plain hash
+	my %args = @args == 1 ? %{shift @args}
+	                      : @args
+	                      ;
+
+	# Create a hash with configuration information
+	my %data = (
+		_default_args => { # Default arguments
+			scheme => 'http',
+		},
+		_lookup_table => {},
+	);
+
+	# Bless the hash to this class
+	my $self = bless \%data, $class;
+
+	# Return our blessed configuration
+	return $self;
+}
+
+###########################################################################
+# PRIVATE METHODS
+sub _get_handler_for {
+	my ($self, $request) = @_;
+
+	# Extract information from the request URI
+	my $uri = URI->new($request->uri)->canonical;
+
+	# Get the handler from the HASH
+	my $handler = $self->{_lookup_table}
+		->{$uri->host}
+		->{$uri->port}
+		->{$uri->scheme}
+		->{$uri->path};
+
+	return $handler;
+}
+sub _register_handler {
+	my ($self, $handler, %args) = @_;
+
+	# Create a URI object
+	my $uri = URI->new;
+
+	# Specify what the URI object normalizes
+	my @uri_normalizes = qw(scheme host port path);
+
+	# Set the pieces
+	foreach my $piece (@uri_normalizes) {
+		$uri->can($piece)->($uri, $args{$piece});
+	}
+
+	# Normalize the URI
+	$uri = $uri->canonical;
+
+	# Set the handler in the HASH
+	$self->{_lookup_table}
+		->{$uri->host}
+		->{$uri->port}
+		->{$uri->scheme}
+		->{$uri->path} = $handler;
+
+	return;
+}
+sub _with_default_arguments {
+	my ($self, %args) = @_;
+
+	# Mixin the defaults
+	foreach my $key (keys %{$self->{_default_args}}) {
+		if (!exists $args{$key}) {
+			# Set the key to the default
+			$args{$key} = $self->{_default_args}->{$key};
+		}
+	}
+
+	# Return just a plain hash
+	return %args;
+}
+
+###########################################################################
+# PRIVATE FUNCTIONS
+sub _convert_psgi_response {
+	my ($response) = @_;
+
+	if (!defined Scalar::Util::blessed($response)) {
+		# Get the type of the response
+		my $response_type = Scalar::Util::reftype($response);
+
+		if (defined $response_type && $response_type eq 'ARRAY') {
+			# This is a PSGI-formatted response
+			my ($status_code, $headers, $body) = @{$response};
+
+			# Change the headers to a header object
+			$headers = HTTP::Headers->new(@{$headers});
+
+			if (ref $body ne 'ARRAY') {
+				# The body is a filehandle
+				my $fh = $body;
+
+				# Change the body to an array reference
+				$body = [];
+
+				while (defined(my $line = $fh->getline)) {
+					# Push the line into the body
+					push @{$body}, $line;
+				}
+			}
+
+			# Create the response object
+			$response = HTTP::Response->new(
+				$status_code, undef, $headers, join q{}, @{$body});
+		}
+	}
+
+	return $response;
 }
 
 1;
@@ -62,13 +250,18 @@ Version 0.001
   # Allow unhandled requests to be live
   allow_live;
 
-  handle_request url => '/test.html', sub {
+  override_request url => '/test.html', sub {
       my ($request) = @_;
 
       # Do something with request and make HTTP::Response
 
       return $response;
   };
+
+  package main;
+
+  # Load the module
+  use Test::Override::UserAgent for => 'testing';
 
 =head1 DESCRIPTION
 
@@ -77,19 +270,114 @@ L<LWP::UserAgent> and any other module extending it. The override can be done
 per-scope (where the API of a module doesn't let you alter it's internal user
 agent obejct) or per-object, but modifying the user agent.
 
+=head1 CONSTRUCTOR
+
+=head2 new
+
+This will construct a new configuration object to allow for configuring user
+agent overrides.
+
+=over 4
+
+=item B<new(%attributes)>
+
+C<%attributes> is a HASH where the keys are attributes (specified in the
+L</ATTRIBUTES> section).
+
+=item B<new($attributes)>
+
+C<$attributes> is a HASHREF where the keys are attributes (specified in the
+L</ATTRIBUTES> section).
+
+=back
+
 =head1 METHODS
 
-There are no methods provided.
+=head2 handle_request
+
+This takes one argument, which is a L<HTTP::Request> object and will return
+either a L<HTTP::Response> if the request had a corresponding override or
+C<undef> if no override was present to handle the request.
+
+=head2 install_in_user_agent
+
+This will install the overrides directly in a user agent, allowing for
+localized overrides. This is the perferred method of overrides. This will
+return the user agent that has the overrides installed.
+
+  # Install into a user agent
+  $ua_override->install_in_user_agent($ua);
+
+  # Install into a new copy
+  my $new_ua = $ua_override->install_in_user_agent($ua, clone => 1);
+
+The first argument is the user agent object (expected to have the C<add_handler>
+method) that the overrides will be installed in. After that, the method takes a
+hash of arguments:
+
+=over 4
+
+=item clone
+
+This is a Boolean specifying to clone the given user agent (with the C<clone>
+method) and install the overrides into the new cloned user agent. The default
+is C<0> to not clone the user agent.
+
+=back
+
+=head2 override_request
+
+This will add a new request override to the configuration. The argument is a
+plain hash with the keys listed below and a subroutine reference as the last
+argument. The subroutine must function as specified in L</HANDLER SUBROUTINE>.
+
+=over 4
+
+=item host
+
+=item path
+
+=item port
+
+=item scheme
+
+=back
+
+=head1 HANDLER SUBROUTINE
+
+The handler subroutine is what you will give to actualy handle a request and
+return a response. The handler subroutine is always given a L<HTTP::Request>
+object as the first argument, which is the request for the handler to handle.
+
+The return value can be one of type kinds:
+
+=over 4
+
+=item L<HTTP::Response> object
+
+=item L<PSGI> response array reference
+
+=back
 
 =head1 DEPENDENCIES
 
 =over 4
 
+=item * L<Carp>
+
+=item * L<HTTP::Headers>
+
+=item * L<HTTP::Response>
+
 =item * L<LWP::UserAgent>
+
+=item * L<Scalar::Util>
 
 =item * L<Sub::Install> 0.90
 
 =item * L<Sub::Override>
+
+=item * L<URI>
 
 =item * L<namespace::clean> 0.04
 

@@ -14,9 +14,14 @@ resources repository => 'git://github.com/dougwilson/perl5-test-override-userage
 
 # Modules that are required
 requires
+	'Carp'              => 0,
+	'HTTP::Headers'     => 0,
+	'HTTP::Response'    => 0,
 	'LWP::UserAgent'    => 0,
+	'Scalar::Util'      => 0,
 	'Sub::Install'      => '0.90',
 	'Sub::Override'     => 0,
+	'URI'               => 0,
 	'namespace::clean'  => '0.04';
 
 # Modules that are required for tests in t/

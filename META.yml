@@ -20,10 +20,19 @@ no_index:
     - inc
     - t
     - xt
+provides:
+  Test::Override::UserAgent:
+    file: lib/Test/Override/UserAgent.pm
+    version: 0.001
 requires:
+  Carp: 0
+  HTTP::Headers: 0
+  HTTP::Response: 0
   LWP::UserAgent: 0
+  Scalar::Util: 0
   Sub::Install: 0.90
   Sub::Override: 0
+  URI: 0
   namespace::clean: 0.04
   perl: 5.8.1
 resources:
