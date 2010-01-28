@@ -15,6 +15,7 @@ MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
+t/simple.t
 xt/clean-namespaces.t
 xt/consistent-version.t
 xt/critic.t
