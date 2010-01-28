@@ -26,6 +26,7 @@ requires
 
 # Modules that are required for tests in t/
 test_requires
+	'IO::String'      => 0,
 	'Test::Exception' => '0.03',
 	'Test::More'      => 0;
 

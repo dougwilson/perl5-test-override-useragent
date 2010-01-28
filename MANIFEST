@@ -15,6 +15,8 @@ MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
+t/from_configuration.t
+t/lib/MyUAConfig.pm
 t/simple.t
 xt/clean-namespaces.t
 xt/consistent-version.t
