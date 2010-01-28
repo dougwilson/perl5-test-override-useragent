@@ -20,6 +20,7 @@ t/handle_request.t
 t/lib/MyUAConfig.pm
 t/psgi.t
 t/simple.t
+t/user_agent.t
 xt/clean-namespaces.t
 xt/consistent-version.t
 xt/critic.t

@@ -26,6 +26,8 @@ requires
 
 # Modules that are required for tests in t/
 test_requires
+	'HTTP::Request'   => 0,
+	'HTTP::Response'  => 0,
 	'IO::String'      => 0,
 	'Test::Exception' => '0.03',
 	'Test::More'      => 0;
