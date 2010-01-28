@@ -103,6 +103,9 @@ sub import {
 	my $use_for = $args{for} || 'testing';
 
 	if ($use_for eq 'configuration') {
+		# Get the calling package
+		my $caller = caller;
+
 		# Create a new configuration object that will be wrapped in
 		# closures.
 		my $conf = $class->new;
@@ -110,12 +113,14 @@ sub import {
 		# Install override_request
 		Sub::Install::install_sub({
 			code => sub { return $conf->override_request(@_); },
+			into => $caller,
 			as   => 'override_request',
 		});
 
 		# Install custom configuration which retuns the config object
 		Sub::Install::install_sub({
 			code => sub { return $conf; },
+			into => $caller,
 			as   => 'configuration',
 		});
 	}
