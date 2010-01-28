@@ -107,10 +107,16 @@ sub import {
 		# closures.
 		my $conf = $class->new;
 
+		# Install override_request
 		Sub::Install::install_sub({
-			# Install override_request
 			code => sub { return $conf->override_request(@_); },
 			as   => 'override_request',
+		});
+
+		# Install custom configuration which retuns the config object
+		Sub::Install::install_sub({
+			code => sub { return $conf; },
+			as   => 'configuration',
 		});
 	}
 
