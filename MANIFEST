@@ -15,6 +15,7 @@ MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
+t/bad_handlers.t
 t/from_configuration.t
 t/handle_request.t
 t/lib/MyUAConfig.pm
