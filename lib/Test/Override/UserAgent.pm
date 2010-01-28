@@ -302,6 +302,10 @@ L</ATTRIBUTES> section).
 
 =back
 
+=head1 ATTRIBUTES
+
+There are no attributes.
+
 =head1 METHODS
 
 =head2 handle_request
