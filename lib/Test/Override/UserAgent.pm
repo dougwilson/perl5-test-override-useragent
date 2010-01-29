@@ -328,34 +328,48 @@ sub _validate_psgi_response {
 		croak 'PSGI headers MUST have even number of elements';
 	}
 
-	# Headers as a hash
-	my %headers = @{$headers};
+	# Headers copied
+	my @headers = @{$headers};
 
-	# Scrape the headers for invalid keys
-	my @invalid_header_keys = grep {
-		_is_invalid_psgi_header_key($_)
-	} keys %headers;
+	# Hold invalid stuff
+	my (@invalid_header_keys, @invalid_header_values,
+		$has_content_type, $has_content_length);
+
+	while (my ($key, $value) = splice @headers, 0, 2) {
+		if (_is_invalid_psgi_header_key($key)) {
+			# Remember the invalid key
+			push @invalid_header_keys, $key;
+		}
+		elsif (lc $key eq 'content-type') {
+			# The response has a defined content type
+			$has_content_type = 1;
+		}
+		elsif (lc $key eq 'content-length') {
+			# The response has a defined content length
+			$has_content_length = 1;
+		}
+
+		if (_is_invalid_psgi_header_value($value)) {
+			# Remember the key of the invalid value
+			push @invalid_header_values, $key;
+		}
+	}
 
 	if (@invalid_header_keys) {
 		croak 'PSGI headers have invalid key(s): ',
 			join q{, }, sort @invalid_header_keys;
 	}
 
-	# Scrape the headers for invalid values
-	my @invalid_header_values = grep {
-		_is_invalid_psgi_header_value($headers{$_})
-	} keys %headers;
-
 	if (@invalid_header_values) {
 		croak 'PSGI headers have invalid value(s): ',
 			join q{, }, sort @invalid_header_values;
 	}
 
-	if (!exists $headers{'Content-Type'} && $code !~ m{\A 1 | [23]04}msx) {
+	if (!$has_content_type && $code !~ m{\A 1 | [23]04}msx) {
 		croak 'There MUST be a Content-Type for code other than 1xx, 204, and 304';
 	}
 
-	if (exists $headers{'Content-Length'} && $code =~ m{\A 1 | [23]04}msx) {
+	if ($has_content_length && $code =~ m{\A 1 | [23]04}msx) {
 		croak 'There MUST NOT be a Content-Length for 1xx, 204, and 304';
 	}
 
