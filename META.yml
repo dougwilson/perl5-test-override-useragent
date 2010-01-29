@@ -37,6 +37,7 @@ requires:
   Scalar::Util: 0
   Sub::Install: 0.90
   Sub::Override: 0
+  Try::Tiny: 0
   URI: 0
   namespace::clean: 0.04
   perl: 5.8.1

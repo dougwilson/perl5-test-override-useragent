@@ -14,7 +14,7 @@ lives_ok {
 	$conf->override_request(
 		host => 'localhost',
 		path => '/echo_uri',
-		sub { return [200, [], [shift->uri]]; },
+		sub { return [200, ['Content-Type' => 'text/plain'], [shift->uri]]; },
 	);
 } 'Create an override for http://localhost/echo_uri';
 

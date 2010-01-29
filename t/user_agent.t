@@ -10,7 +10,7 @@ use Test::Override::UserAgent for => 'testing';
 my $conf = Test::Override::UserAgent->new->override_request(
 	host => 'localhost',
 	path => '/NOTHING',
-	sub { return [200, [], ['NO']]; },
+	sub { return [200, ['Content-Type' => 'text/plain'], ['NO']]; },
 );
 
 # Make a user agent

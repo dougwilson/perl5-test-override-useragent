@@ -20,6 +20,7 @@ use LWP::UserAgent; # Not actually required here, but want it to be loaded
 use Scalar::Util;
 use Sub::Install 0.90;
 use Sub::Override;
+use Try::Tiny;
 use URI;
 
 ###########################################################################
@@ -243,30 +244,49 @@ sub _convert_psgi_response {
 
 		if (defined $response_type && $response_type eq 'ARRAY') {
 			# This is a PSGI-formatted response
-			my ($status_code, $headers, $body) = @{$response};
+			try {
+				# Validate the response
+				_validate_psgi_response($response);
 
-			# Change the headers to a header object
-			$headers = HTTP::Headers->new(@{$headers});
+				# Unwrap the PSGI response
+				my ($status_code, $headers, $body) = @{$response};
 
-			if (ref $body ne 'ARRAY') {
-				# The body is a filehandle
-				my $fh = $body;
+				# Change the headers to a header object
+				$headers = HTTP::Headers->new(@{$headers});
 
-				# Change the body to an array reference
-				$body = [];
+				if (ref $body ne 'ARRAY') {
+					# The body is a filehandle
+					my $fh = $body;
 
-				while (defined(my $line = $fh->getline)) {
-					# Push the line into the body
-					push @{$body}, $line;
+					# Change the body to an array reference
+					$body = [];
+
+					while (defined(my $line = $fh->getline)) {
+						# Push the line into the body
+						push @{$body}, $line;
+					}
+
+					# Close the file
+					$fh->close;
 				}
 
-				# Close the file
-				$fh->close;
+				# Create the response object
+				$response = HTTP::Response->new(
+					$status_code, undef, $headers, join q{}, @{$body});
 			}
+			catch {
+				# Invalid PSGI response
+				my $error = "$_"; # stringify error
 
-			# Create the response object
-			$response = HTTP::Response->new(
-				$status_code, undef, $headers, join q{}, @{$body});
+				# Remove line information from croak
+				$error =~ s{\s at \s .+ \z}{}msx;
+
+				# Set the response
+				$response = _new_internal_response(
+					HTTP::Status::HTTP_EXPECTATION_FAILED,
+					$error,
+				);
+			};
 		}
 		else {
 			# Bad return value from handler
@@ -278,6 +298,69 @@ sub _convert_psgi_response {
 	}
 
 	return $response;
+}
+sub _is_invalid_psgi_header_key {
+	my ($key) = @_;
+
+	return $key =~ m{(?:\A status \z | [:\n] | [_-] \z)}imsx
+		|| $key !~ m{\A [a-z] [a-z0-9_-]* \z}imsx;
+}
+sub _is_invalid_psgi_header_value {
+	my ($value) = @_;
+
+	return ref $value ne q{} || $value =~ m{[\x00-\x19\x21-\x25]}imsx;
+}
+sub _validate_psgi_response {
+	my ($psgi) = @_;
+
+	# Unwrap the response
+	my ($code, $headers, $body) = @{$psgi};
+
+	if ($code !~ m{\A [1-9] \d{2,} \z}msx) {
+		croak 'PSGI HTTP status code MUST be 100 or greater';
+	}
+
+	if (ref $headers ne 'ARRAY') {
+		croak 'PSGI headers MUST be an array reference';
+	}
+
+	if (@{$headers} % 2 != 0) {
+		croak 'PSGI headers MUST have even number of elements';
+	}
+
+	# Headers as a hash
+	my %headers = @{$headers};
+
+	# Scrape the headers for invalid keys
+	my @invalid_header_keys = grep {
+		_is_invalid_psgi_header_key($_)
+	} keys %headers;
+
+	if (@invalid_header_keys) {
+		croak 'PSGI headers have invalid key(s): ',
+			join q{, }, sort @invalid_header_keys;
+	}
+
+	# Scrape the headers for invalid values
+	my @invalid_header_values = grep {
+		_is_invalid_psgi_header_value($headers{$_})
+	} keys %headers;
+
+	if (@invalid_header_values) {
+		croak 'PSGI headers have invalid value(s): ',
+			join q{, }, sort @invalid_header_values;
+	}
+
+	if (!exists $headers{'Content-Type'} && $code !~ m{\A 1 | [23]04}msx) {
+		croak 'There MUST be a Content-Type for code other than 1xx, 204, and 304';
+	}
+
+	if (exists $headers{'Content-Length'} && $code =~ m{\A 1 | [23]04}msx) {
+		croak 'There MUST NOT be a Content-Length for 1xx, 204, and 304';
+	}
+
+	# Return true for successful check
+	return 1;
 }
 
 1;
@@ -418,7 +501,12 @@ The return value can be one of type kinds:
 
 =item L<HTTP::Response> object
 
-=item L<PSGI> response array reference
+=item L<PSGI>-like response array reference
+
+The return value is expected to be similar to C<[$code, [%headers], [@lines]]>.
+The response is expected to be identical to the spec and will be validated. If
+the PSGI response is invalid according to the spec, then a response with a
+status code of 417 will be returned.
 
 =back
 
@@ -439,6 +527,8 @@ The return value can be one of type kinds:
 =item * L<Sub::Install> 0.90
 
 =item * L<Sub::Override>
+
+=item * L<Try::Tiny>
 
 =item * L<URI>
 

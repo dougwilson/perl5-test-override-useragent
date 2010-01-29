@@ -20,6 +20,7 @@ t/from_configuration.t
 t/handle_request.t
 t/lib/MyUAConfig.pm
 t/psgi.t
+t/psgi_validate.t
 t/simple.t
 t/user_agent.t
 xt/clean-namespaces.t

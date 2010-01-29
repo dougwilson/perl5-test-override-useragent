@@ -7,14 +7,14 @@ use Test::Override::UserAgent for => 'configuration';
 override_request
 	host => 'localhost',
 	path => '/echo_uri',
-	sub { return [200, [], [shift->uri]]; };
+	sub { return [200, ['Content-Type' => 'text/plain'], [shift->uri]]; };
 
 # PSGI filehandle
 override_request
 	host => 'localhost',
 	path => 'fh.psgi',
 	sub {
-		return [200, [], IO::String->new("some\nwords\n")];
+		return [200, ['Content-Type' => 'text/plain'], IO::String->new("some\nwords\n")];
 	};
 
 # PSGI headers
@@ -23,9 +23,10 @@ override_request
 	path => 'headers.psgi',
 	sub {
 		my @headers = (
-			'X-PSGI-Test' => 'header',
-			'X-PSGI-Test' => 'header2',
-			'Vary'        => 'something',
+			'Content-Type' => 'text/plain',
+			'X-PSGI-Test'  => 'header',
+			'X-PSGI-Test'  => 'header2',
+			'Vary'         => 'something',
 		);
 
 		return [200, \@headers, []];
@@ -36,7 +37,7 @@ override_request
 	host => 'localhost',
 	path => 'status.psgi',
 	sub {
-		return [shift->uri->query, [], []];
+		return [shift->uri->query, ['Content-Type' => 'text/plain'], []];
 	};
 
 1;
