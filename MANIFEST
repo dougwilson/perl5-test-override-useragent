@@ -19,6 +19,7 @@ t/bad_handlers.t
 t/from_configuration.t
 t/handle_request.t
 t/lib/MyUAConfig.pm
+t/live_restriction.t
 t/psgi.t
 t/psgi_validate.t
 t/simple.t

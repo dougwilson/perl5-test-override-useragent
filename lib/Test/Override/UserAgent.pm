@@ -29,6 +29,16 @@ use namespace::clean 0.04 -except => [qw(meta)];
 
 ###########################################################################
 # METHODS
+sub allow_live_requests {
+	my ($self, $new_value) = @_;
+
+	if (defined $new_value) {
+		# Set the new value
+		$self->{allow_live_requests} = $new_value;
+	}
+
+	return $self->{allow_live_requests};
+}
 sub handle_request {
 	my ($self, $request) = @_;
 
@@ -63,8 +73,21 @@ sub install_in_user_agent {
 
 	# Add as a handler in the user agent
 	$user_agent->add_handler(
-		request_send => sub { return $self->handle_request(shift); },
-		owner        => Scalar::Util::refaddr($self),
+		request_send => sub {
+			# Get the response
+			my $response = $self->handle_request(shift);
+
+			if (!defined $response && !$self->allow_live_requests) {
+				# There is no response and no live requests allowed
+				$response = _new_internal_response(
+					HTTP::Status::HTTP_NOT_FOUND,
+					'Not Found (No Live Requests)',
+				);
+			}
+
+			return $response;
+		},
+		owner => Scalar::Util::refaddr($self),
 	);
 
 	# Return the user agent
@@ -121,6 +144,18 @@ sub import {
 			as   => 'override_request',
 		});
 
+		# Install allow_live
+		Sub::Install::install_sub({
+			code => sub {
+				my $allow = shift;
+
+				# Set the allow live requests (no arguments defaults to 1)
+				$conf->allow_live_requests(defined $allow ? $allow : 1);
+			},
+			into => $caller,
+			as   => 'allow_live',
+		});
+
 		# Install custom configuration which retuns the config object
 		Sub::Install::install_sub({
 			code => sub { return $conf; },
@@ -144,11 +179,22 @@ sub new {
 
 	# Create a hash with configuration information
 	my %data = (
+		# Attributes
+		allow_live_requests => 0,
+
+		# Private attributes
 		_default_args => { # Default arguments
 			scheme => 'http',
 		},
 		_lookup_table => {},
 	);
+
+	# Set attributes
+	foreach my $arg (grep { m{\A [^_]}msx } keys %data) {
+		if (exists $args{$arg}) {
+			$data{$arg} = $args{$arg};
+		}
+	}
 
 	# Bless the hash to this class
 	my $self = bless \%data, $class;
@@ -443,7 +489,13 @@ L</ATTRIBUTES> section).
 
 =head1 ATTRIBUTES
 
-There are no attributes.
+=head2 allow_live_requests
+
+This is a Boolean specifying if the user agent is allowed to make any live
+requests (so allowing it to make requests that are not overwritten). The
+default is C<0> which causes any requests made to a location that has not
+been overwritten to return an appropriate HTTP request as if the overwritten
+responses are the entire Internet.
 
 =head1 METHODS
 
