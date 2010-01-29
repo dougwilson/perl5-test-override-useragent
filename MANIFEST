@@ -20,6 +20,7 @@ t/constructor.t
 t/from_configuration.t
 t/handle_request.t
 t/lib/MyUAConfig.pm
+t/lib/MyUAConfigLive.pm
 t/live_restriction.t
 t/psgi.t
 t/psgi_validate.t

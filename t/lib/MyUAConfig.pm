@@ -3,10 +3,14 @@ package MyUAConfig;
 use IO::String;
 use Test::Override::UserAgent for => 'configuration';
 
+# Disallow live requests
+allow_live(0);
+
 # Simple URI echo
 override_request
-	host => 'localhost',
-	path => '/echo_uri',
+	scheme => 'http',
+	host   => 'localhost',
+	path   => '/echo_uri',
 	sub { return [200, ['Content-Type' => 'text/plain'], [shift->uri]]; };
 
 # PSGI filehandle

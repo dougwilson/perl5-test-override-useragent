@@ -2,13 +2,14 @@
 
 use lib 't/lib';
 
-use Test::More tests => 4;
+use Test::More tests => 6;
 use Test::Exception 0.03;
 
 use LWP::UserAgent;
 
 BEGIN {
 	use_ok('MyUAConfig'); # Our configuration
+	use_ok('MyUAConfigLive'); # Our configuration with live
 }
 
 # Is the configuration us?
@@ -27,3 +28,6 @@ my $response = $ua->get('http://localhost/echo_uri');
 
 # See if the response body is right
 is $response->content, 'http://localhost/echo_uri', 'Echo page intercepted';
+
+ok(MyUAConfigLive->configuration->allow_live_requests,
+	'Configuration with allow live on');
