@@ -1,6 +1,6 @@
 #!perl -T
 
-use Test::More tests => 4;
+use Test::More tests => 7;
 use Test::Exception 0.03;
 
 use LWP::UserAgent;
@@ -41,4 +41,25 @@ SKIP: {
 
 	is $ua->get($live_url)->status_line, $live->status_line,
 		'Live request with through';
+
+	# Remove hooks from the UA
+	$conf->uninstall_from_user_agent($ua);
+
+	# Make sure uninstall succeeded
+	isnt $ua->get('http://localhost/here')->content, 'i am here',
+		'Hooks uninstall from user agent';
+
+	{
+		# Install in the scope
+		my $scope = $conf->install_in_scope;
+
+		is $ua->get($live_url)->status_line, $live->status_line,
+			'Live request with through in scope install';
+
+		# Turn off live requests
+		$conf->allow_live_requests(0);
+
+		isnt $ua->get($live_url)->status_line, $live->status_line,
+			'Live request allow changed without removing scope install';
+	}
 }

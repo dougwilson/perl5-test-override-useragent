@@ -27,6 +27,9 @@ provides:
   Test::Override::UserAgent:
     file: lib/Test/Override/UserAgent.pm
     version: 0.001
+  Test::Override::UserAgent::Scope:
+    file: lib/Test/Override/UserAgent/Scope.pm
+    version: 0.001
 requires:
   Carp: 0
   HTTP::Date: 0

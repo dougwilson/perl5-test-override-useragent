@@ -19,7 +19,7 @@ use HTTP::Status 5.817 ();
 use LWP::UserAgent; # Not actually required here, but want it to be loaded
 use Scalar::Util;
 use Sub::Install 0.90;
-use Sub::Override;
+use Test::Override::UserAgent::Scope;
 use Try::Tiny;
 use URI;
 
@@ -40,25 +40,49 @@ sub allow_live_requests {
 	return $self->{allow_live_requests};
 }
 sub handle_request {
-	my ($self, $request) = @_;
+	my ($self, $request, %args) = @_;
 
 	# Lookup the handler for the request
 	my $handler = $self->_get_handler_for($request);
 
-	if (!defined $handler) {
-		# No handler defined for this request
-		return;
+	# Hold the response
+	my $response;
+
+	if (defined $handler) {
+		# Get the response
+		$response = _convert_psgi_response($handler->($request));
+
+		if (!defined $response->request) {
+			# Set the request that made this response
+			$response->request($request);
+		}
 	}
 
-	# Get the response
-	my $response = _convert_psgi_response($handler->($request));
-
-	if (!defined $response->request) {
-		# Set the request that made this response
-		$response->request($request);
+	if (!defined $response && exists $args{live_request_handler}) {
+		# There was no handler/response and a live requestor was provided
+		if ($self->allow_live_requests) {
+			# Make the live request
+			$response = $args{live_request_handler}->($request);
+		}
+		else {
+			# Make an internal response for not successful since no
+			# live requests are allowed.
+			$response = _new_internal_response(
+				HTTP::Status::HTTP_NOT_FOUND,
+				'Not Found (No Live Requests)',
+			);
+		}
 	}
 
 	return $response;
+}
+sub install_in_scope {
+	my ($self) = @_;
+
+	# Return the scope variable
+	return Test::Override::UserAgent::Scope->new(
+		override => $self,
+	);
 }
 sub install_in_user_agent {
 	my ($self, $user_agent, %args) = @_;
@@ -75,15 +99,10 @@ sub install_in_user_agent {
 	$user_agent->add_handler(
 		request_send => sub {
 			# Get the response
-			my $response = $self->handle_request(shift);
-
-			if (!defined $response && !$self->allow_live_requests) {
-				# There is no response and no live requests allowed
-				$response = _new_internal_response(
-					HTTP::Status::HTTP_NOT_FOUND,
-					'Not Found (No Live Requests)',
-				);
-			}
+			my $response = $self->handle_request(
+				shift,
+				live_request_handler => sub { return; },
+			);
 
 			return $response;
 		},
@@ -187,6 +206,7 @@ sub new {
 			scheme => 'http',
 		},
 		_lookup_table => {},
+		_protocol_classes => {},
 	);
 
 	# Set attributes
@@ -198,6 +218,9 @@ sub new {
 
 	# Bless the hash to this class
 	my $self = bless \%data, $class;
+
+	# Set our unique name
+	$self->{_uniq_name} = $class . '::Number' . Scalar::Util::refaddr($self);
 
 	# Return our blessed configuration
 	return $self;
@@ -219,24 +242,6 @@ sub _get_handler_for {
 		->{$uri->path};
 
 	return $handler;
-}
-sub _new_internal_response {
-	my ($code, $message) = @_;
-
-	# Make a new response
-	my $response = HTTP::Response->new($code, $message);
-
-	# Set some headers for client information
-	$response->headers(
-		'Client-Date'    => HTTP::Date::time2str(time),
-		'Client-Warning' => 'Internal response',
-		'Content-Type'   => 'text/plain',
-	);
-
-	# Set the content as the status_line
-	$response->content("$code $message");
-
-	return $response;
 }
 sub _register_handler {
 	my ($self, $handler, %args) = @_;
@@ -355,6 +360,24 @@ sub _is_invalid_psgi_header_value {
 	my ($value) = @_;
 
 	return ref $value ne q{} || $value =~ m{[\x00-\x19\x21-\x25]}imsx;
+}
+sub _new_internal_response {
+	my ($code, $message) = @_;
+
+	# Make a new response
+	my $response = HTTP::Response->new($code, $message);
+
+	# Set some headers for client information
+	$response->headers(
+		'Client-Date'    => HTTP::Date::time2str(time),
+		'Client-Warning' => 'Internal response',
+		'Content-Type'   => 'text/plain',
+	);
+
+	# Set the content as the status_line
+	$response->content("$code $message");
+
+	return $response;
 }
 sub _validate_psgi_response {
 	my ($psgi) = @_;
@@ -501,9 +524,54 @@ responses are the entire Internet.
 
 =head2 handle_request
 
-This takes one argument, which is a L<HTTP::Request> object and will return
-either a L<HTTP::Response> if the request had a corresponding override or
-C<undef> if no override was present to handle the request.
+The first argument is a L<HTTP::Request> object. The rest of the arguments
+are a hash (not a hash reference) with the keys specified below. This will
+return either a L<HTTP::Response> if the request had a corresponding override
+or C<undef> if no override was present to handle the request. Unless the
+C<live_request_handler> was specified, which changes what is returned (see
+below).
+
+=over 4
+
+=item live_request_handler
+
+This takes a code reference that will be called if it is determined that the
+request should be live. The sode is given one argument: the request object that
+was given to L</handle_request>. If this argument is given, then if it is
+determined that live requests are not permitted, L</handle_request> will no
+longer return C<undef> and will instead return a L<HTTP::Response> object as
+normal (but won't be a successful response).
+
+  $conf->handle_request($request, live_request_handler => sub {
+      my ($live_request) = @_;
+
+      # Make the live request somehow
+      my $response = ...
+
+      # Return the response
+      return $response;
+  });
+
+=back
+
+=head2 install_in_scope
+
+This will install the user agent override configuration into the current scope.
+The recommended install is L</install_in_user_agent> but if what needs to be
+tested does not expose the user agent for manipulation, then that method should
+be used. This will return a scalar reference L<Test::Override::UserAgent::Scope>,
+that until destroyed (by going out of scope, for instance) will override all
+L<LWP::UserAgent> requests.
+
+  # Current config in $config
+  {
+      # Install in this scope
+      my $scope = $config->install_in_scope;
+
+      # Test our API
+      ok $object->works, "The object works!";
+  }
+  # $scope is destroyed, and so override configuration is removed
 
 =head2 install_in_user_agent
 
@@ -591,8 +659,6 @@ status code of 417 will be returned.
 =item * L<Scalar::Util>
 
 =item * L<Sub::Install> 0.90
-
-=item * L<Sub::Override>
 
 =item * L<Try::Tiny>
 

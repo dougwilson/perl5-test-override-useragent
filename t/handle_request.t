@@ -2,7 +2,7 @@
 
 use lib 't/lib';
 
-use Test::More tests => 4;
+use Test::More tests => 5;
 use Test::Exception 0.03;
 
 use HTTP::Request;
@@ -44,6 +44,11 @@ $request->uri('http://localhost/nothere');
 # The request was not handled
 ok !defined $conf->handle_request($request),
 	'Did not find matching override';
+
+# The request was not handled
+isa_ok $conf->handle_request($request, live_request_handler => sub {}),
+	'HTTP::Response',
+	'No override and no live with live_request_handler';
 
 # Change the URI
 $request->uri('http://localhost/request');
