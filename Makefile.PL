@@ -15,6 +15,7 @@ resources repository => 'git://github.com/dougwilson/perl5-test-override-userage
 # Modules that are required
 requires
 	'Carp'              => 0,
+	'HTTP::Config'      => '5.815',
 	'HTTP::Date'        => 0,
 	'HTTP::Headers'     => 0,
 	'HTTP::Response'    => 0,

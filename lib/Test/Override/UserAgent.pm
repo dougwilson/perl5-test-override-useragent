@@ -12,6 +12,7 @@ our $VERSION   = '0.001';
 ###########################################################################
 # MODULE IMPORTS
 use Carp qw(croak);
+use HTTP::Config 5.815;
 use HTTP::Date ();
 use HTTP::Headers;
 use HTTP::Response;
@@ -119,7 +120,7 @@ sub override_request {
 	my $handler = pop @args;
 
 	# Convert the arguments into a hash
-	my %args = $self->_with_default_arguments(@args);
+	my %args = @args;
 
 	# Register the handler
 	$self->_register_handler($handler, %args);
@@ -202,10 +203,7 @@ sub new {
 		allow_live_requests => 0,
 
 		# Private attributes
-		_default_args => { # Default arguments
-			scheme => 'http',
-		},
-		_lookup_table => {},
+		_lookup_table => HTTP::Config->new,
 		_protocol_classes => {},
 	);
 
@@ -231,57 +229,26 @@ sub new {
 sub _get_handler_for {
 	my ($self, $request) = @_;
 
-	# Extract information from the request URI
-	my $uri = URI->new($request->uri)->canonical;
+	# Get the handler
+	my @handlers = $self->{_lookup_table}->matching_items($request);
 
-	# Get the handler from the HASH
-	my $handler = $self->{_lookup_table}
-		->{$uri->host}
-		->{$uri->port}
-		->{$uri->scheme}
-		->{$uri->path};
-
-	return $handler;
+	return $handlers[0];
 }
 sub _register_handler {
 	my ($self, $handler, %args) = @_;
 
-	# Create a URI object
-	my $uri = URI->new;
-
-	# Specify what the URI object normalizes
-	my @uri_normalizes = qw(scheme host port path);
-
-	# Set the pieces
-	foreach my $piece (@uri_normalizes) {
-		$uri->can($piece)->($uri, $args{$piece});
-	}
-
-	# Normalize the URI
-	$uri = $uri->canonical;
-
-	# Set the handler in the HASH
-	$self->{_lookup_table}
-		->{$uri->host}
-		->{$uri->port}
-		->{$uri->scheme}
-		->{$uri->path} = $handler;
-
-	return;
-}
-sub _with_default_arguments {
-	my ($self, %args) = @_;
-
-	# Mixin the defaults
-	foreach my $key (keys %{$self->{_default_args}}) {
-		if (!exists $args{$key}) {
-			# Set the key to the default
-			$args{$key} = $self->{_default_args}->{$key};
+	# Add m_ to the beginning of the arguments
+	foreach my $key (keys %args) {
+		if ($key !~ m{\A m_}msx) {
+			# Add m_
+			$args{"m_$key"} = delete $args{$key};
 		}
 	}
 
-	# Return just a plain hash
-	return %args;
+	# Set the handler
+	$self->{_lookup_table}->add_item($handler, %args);
+
+	return;
 }
 
 ###########################################################################
@@ -602,20 +569,9 @@ is C<0> to not clone the user agent.
 =head2 override_request
 
 This will add a new request override to the configuration. The argument is a
-plain hash with the keys listed below and a subroutine reference as the last
-argument. The subroutine must function as specified in L</HANDLER SUBROUTINE>.
-
-=over 4
-
-=item host
-
-=item path
-
-=item port
-
-=item scheme
-
-=back
+plain hash with the keys that L<HTTP::Config> takes as specified in
+L<HTTP::Config/Matching>. The keys may leave off the C<m_> prefix. The
+subroutine must function as specified in L</HANDLER SUBROUTINE>.
 
 =head2 uninstall_from_user_agent
 
@@ -649,6 +605,8 @@ status code of 417 will be returned.
 =over 4
 
 =item * L<Carp>
+
+=item * L<HTTP::Config> 5.815
 
 =item * L<HTTP::Headers>
 

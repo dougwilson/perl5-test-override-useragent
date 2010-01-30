@@ -16,7 +16,7 @@ override_request
 # PSGI filehandle
 override_request
 	host => 'localhost',
-	path => 'fh.psgi',
+	path => '/fh.psgi',
 	sub {
 		return [200, ['Content-Type' => 'text/plain'], IO::String->new("some\nwords\n")];
 	};
@@ -24,7 +24,7 @@ override_request
 # PSGI headers
 override_request
 	host => 'localhost',
-	path => 'headers.psgi',
+	path => '/headers.psgi',
 	sub {
 		my @headers = (
 			'Content-Type' => 'text/plain',
@@ -39,7 +39,7 @@ override_request
 # PSGI status
 override_request
 	host => 'localhost',
-	path => 'status.psgi',
+	path => '/status.psgi',
 	sub {
 		return [shift->uri->query, ['Content-Type' => 'text/plain'], []];
 	};
