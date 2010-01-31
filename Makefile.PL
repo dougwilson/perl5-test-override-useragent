@@ -20,6 +20,7 @@ requires
 	'HTTP::Headers'     => 0,
 	'HTTP::Response'    => 0,
 	'HTTP::Status'      => '5.817',
+	'LEP::Protocol'     => 0,
 	'LWP::UserAgent'    => 0,
 	'Scalar::Util'      => 0,
 	'Sub::Install'      => '0.90',
