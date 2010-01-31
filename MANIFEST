@@ -10,11 +10,24 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Test/Override/UserAgent.pm
+lib/Test/Override/UserAgent/Scope.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
+t/bad_handlers.t
+t/constructor.t
+t/from_configuration.t
+t/handle_request.t
+t/lib/MyUAConfig.pm
+t/lib/MyUAConfigLive.pm
+t/live_restriction.t
+t/psgi.t
+t/psgi_validate.t
+t/scope.t
+t/simple.t
+t/user_agent.t
 xt/clean-namespaces.t
 xt/consistent-version.t
 xt/critic.t
