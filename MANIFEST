@@ -38,3 +38,4 @@ xt/perl-version.t
 xt/perlcriticrc
 xt/pod-coverage.t
 xt/pod.t
+xt/used-check.t
