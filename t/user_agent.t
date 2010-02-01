@@ -40,7 +40,8 @@ isnt $ua->get('http://localhost/NOTHING')->content, 'NO',
 	'Overridden request no longer present';
 
 # Test custom run count
-is $pre_handler_ran, 2, 'Custom handler present after uninstall';
+# Count may be bigger if localhost request got a redirect
+cmp_ok $pre_handler_ran, '>=', 2, 'Custom handler present after uninstall';
 
 # Install in a clone
 my $clone_ua = $conf->install_in_user_agent($ua, clone => 1);
