@@ -1,7 +1,7 @@
 Revision history for Test-Override-UserAgent
 ============================================
 
-0.002 TO BE RELEASED
+0.002 Sun, January 31, 2010 20:14:12 -0500
   * [Fix] Fixed typo listing "LEP::Protocol" as a dependency instead of
     "LWP::Protocol".
 
