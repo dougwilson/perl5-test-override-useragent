@@ -34,6 +34,7 @@ my $build = Module::Build->new(
 	requires => {
 		'perl'              => '5.008001',
 		'Carp'              => 0,
+		'Clone'             => 0,
 		'HTTP::Config'      => '5.815',
 		'HTTP::Date'        => 0,
 		'HTTP::Headers'     => 0,

@@ -12,6 +12,7 @@ our $VERSION   = '0.002_001';
 ###########################################################################
 # MODULE IMPORTS
 use Carp qw(croak);
+use Clone;
 use HTTP::Config 5.815;
 use HTTP::Date ();
 use HTTP::Headers;
@@ -157,11 +158,35 @@ sub import {
 		# closures.
 		my $conf = $class->new;
 
+		# Create a defaults hash for colsures
+		my $defaults = {};
+
 		# Install override_request
 		Sub::Install::install_sub({
-			code => sub { return $conf->override_request(@_); },
+			code => sub { return $conf->override_request(%{$defaults}, @_); },
 			into => $caller,
 			as   => 'override_request',
+		});
+
+		# Install override_for
+		Sub::Install::install_sub({
+			code => sub {
+				my $block = pop;
+
+				# Rember the current defaults
+				my $previous_defaults = $defaults;
+
+				# Set the new defaults as an extension of the current
+				$defaults = {%{Clone::clone($defaults)}, @_};
+
+				# Run the block with the defaults in effect
+				$block->();
+
+				# Restore the defaults
+				$defaults = $previous_defaults;
+			},
+			into => $caller,
+			as   => 'override_for',
 		});
 
 		# Install allow_live

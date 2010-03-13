@@ -58,7 +58,36 @@ no arguments are provided, then live requests are enabled.
 This is a special method that returns the instance of L<Test::Override::UserAgent>
 for this package.
 
-=head2 override_requst
+=head2 override_for
+
+B<Added in version 0.003>; be sure to require this version for this feature.
+
+This is a very convenient function to set some defaults for an entire block of
+code. This function takes the exact same arguments as C<override_request>
+except the subroutine reference at the end is a block that will be built with
+the default arguments to all calls of C<override_request> within. Calls made to
+C<override_for> within an C<override_for> block will extend the current scope's
+defaults with those provided. The main scope begins with no defaults.
+
+  override_for host => 'localhost', sub {
+      override_request path => '/', sub {
+          # ... only for host localhost and path /
+      };
+
+      # Make an easy REST URL
+      override_for path => '/rest', sub {
+          # GET
+          override_request method => 'GET'   , sub { ... };
+          # POST
+          override_request method => 'POST'  , sub { ... };
+          # DELETE
+          override_request method => 'DELETE', sub { ... };
+          # PUT
+          override_request method => 'PUT'   , sub { ... };
+      };
+  };
+
+=head2 override_request
 
 This is the same as the method in L<Test::Override::UserAgent> but acts on the
 configuration in the package.
