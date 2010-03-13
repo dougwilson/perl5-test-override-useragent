@@ -458,6 +458,27 @@ L<LWP::UserAgent> and any other module extending it. The override can be done
 per-scope (where the API of a module doesn't let you alter it's internal user
 agent obejct) or per-object, but modifying the user agent.
 
+=head1 IMPORTING
+
+This module take a HASH of arguments to the C<import> method that specify how
+this module will alter the symbol table of the package calling the C<import>
+method. Without any arguments supplied, this module will not alter the symbol
+table. The following keys are accepted:
+
+=over 4
+
+=item for
+
+This specifies the reason this module is being imported into the calling
+package. The value for this is a string. By default the value is C<testing>
+which specifies the module is for testing purposes and will not import
+anything. The other option is C<configuration> which imports several symbols
+and sets up the calling package to be a configuration package. For details
+about making a configuration package, see
+L<Test::Override::UserAgent::Manual::ConfigurationPackage>.
+
+=back
+
 =head1 CONSTRUCTOR
 
 =head2 new

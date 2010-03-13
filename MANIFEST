@@ -1,6 +1,7 @@
 Build.PL
 Changes
 lib/Test/Override/UserAgent.pm
+lib/Test/Override/UserAgent/Manual/ConfigurationPackage.pod
 lib/Test/Override/UserAgent/Scope.pm
 LICENSE
 MANIFEST			This list of files
