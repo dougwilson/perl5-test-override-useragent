@@ -7,7 +7,7 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.002';
+our $VERSION   = '0.002_001';
 
 ###########################################################################
 # MODULE IMPORTS
@@ -419,12 +419,11 @@ __END__
 
 =head1 NAME
 
-Test::Override::UserAgent - Override the LWP::UserAgent to return canned
-responses for testing
+Test::Override::UserAgent - Override the LWP::UserAgent to return canned responses for testing
 
 =head1 VERSION
 
-Version 0.002
+Version 0.002_001
 
 =head1 SYNOPSIS
 
@@ -436,7 +435,7 @@ Version 0.002
   # Allow unhandled requests to be live
   allow_live;
 
-  override_request url => '/test.html', sub {
+  override_request path => '/test.html', sub {
       my ($request) = @_;
 
       # Do something with request and make HTTP::Response
@@ -447,7 +446,10 @@ Version 0.002
   package main;
 
   # Load the module
-  use Test::Override::UserAgent for => 'testing';
+  use Test::My::Module::UserAgent::Configuration;
+
+  my $scope = Test::My::Module::UserAgent::Configuration
+      ->configuration->install_in_scope;
 
 =head1 DESCRIPTION
 

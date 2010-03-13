@@ -1,9 +1,10 @@
 Revision history for Test-Override-UserAgent
 ============================================
 
-0.003 TO BE RELEASED
+0.002_001 TO BE RELEASED
   * [Fix] Fixed test t/user_agent.t to be less prone to failure if a
     request to localhost causes a redirect.
+  * Experimental change to `Module::Build`
 
 0.002 Sun, January 31, 2010 20:14:12 -0500
   * [Fix] Fixed typo listing "LEP::Protocol" as a dependency instead of
