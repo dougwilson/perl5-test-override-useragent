@@ -46,8 +46,9 @@ imported into the package:
 
 =head2 allow_live
 
-This is the same as the method in L<Test::Override::UserAgent> but acts on the
-configuration in the package.
+This is the same as the method C<allow_live_requests> in
+L<Test::Override::UserAgent> but acts on the configuration in the package. If
+no arguments are provided, then live requests are enabled.
 
   # Allow live requests
   allow_live(1);
