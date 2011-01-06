@@ -16,7 +16,10 @@ my $conf = Test::Override::UserAgent->new->override_request(
 );
 
 # Create the UA
-my $ua = $conf->install_in_user_agent(LWP::UserAgent->new);
+my $ua = LWP::UserAgent->new(timeout => 2);
+
+# Install the override
+$ua = $conf->install_in_user_agent(LWP::UserAgent->new);
 
 ok !$conf->allow_live_requests,
 	'Default allow live requests is false';
