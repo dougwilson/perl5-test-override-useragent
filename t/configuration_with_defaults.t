@@ -3,7 +3,7 @@
 use lib 't/lib';
 
 use Test::More tests => 10;
-use Test::Exception 0.03;
+use Test::Fatal;
 
 use LWP::UserAgent;
 
@@ -15,9 +15,9 @@ BEGIN {
 my $ua = LWP::UserAgent->new;
 
 # Install the overrides
-lives_ok {
+is(exception {
 	MyUAConfigDefaults->configuration->install_in_user_agent($ua);
-} 'Install overrides into UA';
+}, undef, 'Install overrides into UA');
 
 # Make sure the host override set
 is $ua->get('http://localhost/')->content, 'override', 'Override set host';

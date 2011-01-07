@@ -1,7 +1,6 @@
 #!perl -T
 
 use Test::More tests => 7;
-use Test::Exception 0.03;
 
 use LWP::UserAgent;
 use Test::Override::UserAgent for => 'testing';
