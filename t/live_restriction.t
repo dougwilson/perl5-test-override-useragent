@@ -35,10 +35,10 @@ ok $conf->allow_live_requests,
 
 SKIP: {
 	# Test for seeing if we can do live
-	my $live = LWP::UserAgent->new->get($live_url);
+	my $live = LWP::UserAgent->new(timeout => 2)->get($live_url);
 
 	if ($live->code != 200) {
-		skip "Unable to fetch $live_url", 1;
+		skip "Unable to fetch $live_url", 4;
 	}
 
 	is $ua->get($live_url)->status_line, $live->status_line,
