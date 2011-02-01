@@ -5,7 +5,7 @@ use Test::More tests => 7;
 use LWP::UserAgent;
 use Test::Override::UserAgent for => 'testing';
 
-my $live_url = 'http://www.google.com/';
+my $live_url = 'http://www.cpan.org/authors/02STAMP';
 
 # Create a configuration
 my $conf = Test::Override::UserAgent->new->override_request(
