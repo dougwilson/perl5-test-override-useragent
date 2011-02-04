@@ -26,10 +26,10 @@ no_index:
 provides:
   Test::Override::UserAgent:
     file: lib/Test/Override/UserAgent.pm
-    version: 0.002_001
+    version: 0.003
   Test::Override::UserAgent::Scope:
     file: lib/Test/Override/UserAgent/Scope.pm
-    version: 0.002_001
+    version: 0.003
 requires:
   Carp: 0
   Clone: 0
@@ -51,4 +51,4 @@ resources:
   homepage: http://github.com/dougwilson/perl5-test-override-useragent/
   license: http://dev.perl.org/licenses/
   repository: git://github.com/dougwilson/perl5-test-override-useragent.git
-version: 0.002_001
+version: 0.003
