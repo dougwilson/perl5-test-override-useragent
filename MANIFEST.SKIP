@@ -7,3 +7,6 @@
 \ADebian_CPANTS.txt\z
 \.mkdn\z    # All Markdown files (because they are for Github)
 \Acover_db/ # The Devel::Cover database
+^MYMETA.yml$
+\ABuild\z
+\A_build/

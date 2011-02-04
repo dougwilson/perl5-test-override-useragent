@@ -3,7 +3,7 @@
 use lib 't/lib';
 
 use Test::More tests => 6;
-use Test::Exception 0.03;
+use Test::Fatal;
 
 use LWP::UserAgent;
 
@@ -19,15 +19,17 @@ isa_ok(MyUAConfig->configuration, 'Test::Override::UserAgent', '__PACKAGE__->con
 my $ua = LWP::UserAgent->new;
 
 # Install the overrides
-lives_ok {
+is(exception {
 	MyUAConfig->configuration->install_in_user_agent($ua);
-} 'Install overrides into UA';
+}, undef, 'Install overrides into UA');
 
 # Get the echo URI page
 my $response = $ua->get('http://localhost/echo_uri');
 
 # See if the response body is right
-is $response->content, 'http://localhost/echo_uri', 'Echo page intercepted';
+is($response->content, 'http://localhost/echo_uri', 'Echo page intercepted');
 
 ok(MyUAConfigLive->configuration->allow_live_requests,
 	'Configuration with allow live on');
+
+exit 0;

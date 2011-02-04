@@ -7,11 +7,12 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.002';
+our $VERSION   = '0.003';
 
 ###########################################################################
 # MODULE IMPORTS
 use Carp qw(croak);
+use Clone;
 use HTTP::Config 5.815;
 use HTTP::Date ();
 use HTTP::Headers;
@@ -157,11 +158,35 @@ sub import {
 		# closures.
 		my $conf = $class->new;
 
+		# Create a defaults hash for colsures
+		my $defaults = {};
+
 		# Install override_request
 		Sub::Install::install_sub({
-			code => sub { return $conf->override_request(@_); },
+			code => sub { return $conf->override_request(%{$defaults}, @_); },
 			into => $caller,
 			as   => 'override_request',
+		});
+
+		# Install override_for
+		Sub::Install::install_sub({
+			code => sub {
+				my $block = pop;
+
+				# Rember the current defaults
+				my $previous_defaults = $defaults;
+
+				# Set the new defaults as an extension of the current
+				$defaults = {%{Clone::clone($defaults)}, @_};
+
+				# Run the block with the defaults in effect
+				$block->();
+
+				# Restore the defaults
+				$defaults = $previous_defaults;
+			},
+			into => $caller,
+			as   => 'override_for',
 		});
 
 		# Install allow_live
@@ -419,12 +444,11 @@ __END__
 
 =head1 NAME
 
-Test::Override::UserAgent - Override the LWP::UserAgent to return canned
-responses for testing
+Test::Override::UserAgent - Override the LWP::UserAgent to return canned responses for testing
 
 =head1 VERSION
 
-Version 0.002
+Version 0.003
 
 =head1 SYNOPSIS
 
@@ -436,7 +460,7 @@ Version 0.002
   # Allow unhandled requests to be live
   allow_live;
 
-  override_request url => '/test.html', sub {
+  override_request path => '/test.html', sub {
       my ($request) = @_;
 
       # Do something with request and make HTTP::Response
@@ -447,14 +471,39 @@ Version 0.002
   package main;
 
   # Load the module
-  use Test::Override::UserAgent for => 'testing';
+  use Test::My::Module::UserAgent::Configuration;
+
+  my $scope = Test::My::Module::UserAgent::Configuration
+      ->configuration->install_in_scope;
 
 =head1 DESCRIPTION
 
 This module allows for very easy overriding of the request-response cycle of
-L<LWP::UserAgent> and any other module extending it. The override can be done
-per-scope (where the API of a module doesn't let you alter it's internal user
-agent obejct) or per-object, but modifying the user agent.
+L<LWP::UserAgent|LWP::UserAgent> and any other module extending it. The
+override can be done per-scope (where the API of a module doesn't let you
+alter it's internal user agent object) or per-object, but modifying the
+user agent.
+
+=head1 IMPORTING
+
+This module take a HASH of arguments to the C<import> method that specify how
+this module will alter the symbol table of the package calling the C<import>
+method. Without any arguments supplied, this module will not alter the symbol
+table. The following keys are accepted:
+
+=over 4
+
+=item for
+
+This specifies the reason this module is being imported into the calling
+package. The value for this is a string. By default the value is C<testing>
+which specifies the module is for testing purposes and will not import
+anything. The other option is C<configuration> which imports several symbols
+and sets up the calling package to be a configuration package. For details
+about making a configuration package, see
+L<Test::Override::UserAgent::Manual::ConfigurationPackage|Test::Override::UserAgent::Manual::ConfigurationPackage>.
+
+=back
 
 =head1 CONSTRUCTOR
 
@@ -491,23 +540,24 @@ responses are the entire Internet.
 
 =head2 handle_request
 
-The first argument is a L<HTTP::Request> object. The rest of the arguments
-are a hash (not a hash reference) with the keys specified below. This will
-return either a L<HTTP::Response> if the request had a corresponding override
-or C<undef> if no override was present to handle the request. Unless the
-C<live_request_handler> was specified, which changes what is returned (see
-below).
+The first argument is a L<HTTP::Request object|HTTP::Request>. The rest of
+the arguments are a hash (not a hash reference) with the keys specified
+below. This will return either a L<HTTP::Request|HTTP::Response> if the
+request had a corresponding override or C<undef> if no override was present
+to handle the request. Unless the C<live_request_handler> was specified,
+which changes what is returned (see below).
 
 =over 4
 
 =item live_request_handler
 
 This takes a code reference that will be called if it is determined that the
-request should be live. The sode is given one argument: the request object that
+request should be live. The code is given one argument: the request object that
 was given to L</handle_request>. If this argument is given, then if it is
 determined that live requests are not permitted, L</handle_request> will no
-longer return C<undef> and will instead return a L<HTTP::Response> object as
-normal (but won't be a successful response).
+longer return C<undef> and will instead return a
+L<HTTP::Response object|HTTP::Response> as normal (but won't be a successful
+response).
 
   $conf->handle_request($request, live_request_handler => sub {
       my ($live_request) = @_;
@@ -526,9 +576,10 @@ normal (but won't be a successful response).
 This will install the user agent override configuration into the current scope.
 The recommended install is L</install_in_user_agent> but if what needs to be
 tested does not expose the user agent for manipulation, then that method should
-be used. This will return a scalar reference L<Test::Override::UserAgent::Scope>,
+be used. This will return a scalar reference
+L<Test::Override::UserAgent::Scope|Test::Override::UserAgent::Scope>,
 that until destroyed (by going out of scope, for instance) will override all
-L<LWP::UserAgent> requests.
+L<LWP::UserAgent|LWP::UserAgent> requests.
 
   # Current config in $config
   {
@@ -543,7 +594,7 @@ L<LWP::UserAgent> requests.
 =head2 install_in_user_agent
 
 This will install the overrides directly in a user agent, allowing for
-localized overrides. This is the perferred method of overrides. This will
+localized overrides. This is the preferred method of overrides. This will
 return the user agent that has the overrides installed.
 
   # Install into a user agent
@@ -569,7 +620,7 @@ is C<0> to not clone the user agent.
 =head2 override_request
 
 This will add a new request override to the configuration. The argument is a
-plain hash with the keys that L<HTTP::Config> takes as specified in
+plain hash with the keys that L<HTTP::Config|HTTP::Config> takes as specified in
 L<HTTP::Config/Matching>. The keys may leave off the C<m_> prefix. The
 subroutine must function as specified in L</HANDLER SUBROUTINE>.
 
@@ -581,17 +632,18 @@ the handlers from.
 
 =head1 HANDLER SUBROUTINE
 
-The handler subroutine is what you will give to actualy handle a request and
-return a response. The handler subroutine is always given a L<HTTP::Request>
-object as the first argument, which is the request for the handler to handle.
+The handler subroutine is what you will give to actually handle a request and
+return a response. The handler subroutine is always given a
+L<HTTP::Request object|HTTP::Request> as the first argument, which is the
+request for the handler to handle.
 
 The return value can be one of type kinds:
 
 =over 4
 
-=item L<HTTP::Response> object
+=item L<HTTP::Response|HTTP::Response> object
 
-=item L<PSGI>-like response array reference
+=item L<PSGI|PSGI>-like response array reference
 
 The return value is expected to be similar to C<[$code, [%headers], [@lines]]>.
 The response is expected to be identical to the spec and will be validated. If
@@ -604,25 +656,25 @@ status code of 417 will be returned.
 
 =over 4
 
-=item * L<Carp>
+=item * L<Carp|Carp>
 
-=item * L<HTTP::Config> 5.815
+=item * L<HTTP::Config|HTTP::Config> 5.815
 
-=item * L<HTTP::Headers>
+=item * L<HTTP::Headers|HTTP::Headers>
 
-=item * L<HTTP::Response>
+=item * L<HTTP::Response|HTTP::Response>
 
-=item * L<LWP::UserAgent>
+=item * L<LWP::UserAgent|LWP::UserAgent>
 
-=item * L<Scalar::Util>
+=item * L<Scalar::Util|Scalar::Util>
 
-=item * L<Sub::Install> 0.90
+=item * L<Sub::Install|Sub::Install> 0.90
 
-=item * L<Try::Tiny>
+=item * L<Try::Tiny|Try::Tiny>
 
-=item * L<URI>
+=item * L<URI|URI>
 
-=item * L<namespace::clean> 0.04
+=item * L<namespace::clean|namespace::clean> 0.04
 
 =back
 

@@ -1,12 +1,11 @@
 #!perl -T
 
 use Test::More tests => 7;
-use Test::Exception 0.03;
 
 use LWP::UserAgent;
 use Test::Override::UserAgent for => 'testing';
 
-my $live_url = 'http://www.google.com/';
+my $live_url = 'http://www.cpan.org/authors/02STAMP';
 
 # Create a configuration
 my $conf = Test::Override::UserAgent->new->override_request(
@@ -16,7 +15,10 @@ my $conf = Test::Override::UserAgent->new->override_request(
 );
 
 # Create the UA
-my $ua = $conf->install_in_user_agent(LWP::UserAgent->new);
+my $ua = LWP::UserAgent->new(timeout => 2);
+
+# Install the override
+$ua = $conf->install_in_user_agent($ua);
 
 ok !$conf->allow_live_requests,
 	'Default allow live requests is false';
@@ -33,10 +35,10 @@ ok $conf->allow_live_requests,
 
 SKIP: {
 	# Test for seeing if we can do live
-	my $live = LWP::UserAgent->new->get($live_url);
+	my $live = LWP::UserAgent->new(timeout => 2)->get($live_url);
 
 	if ($live->code != 200) {
-		skip "Unable to fetch $live_url", 1;
+		skip "Unable to fetch $live_url", 4;
 	}
 
 	is $ua->get($live_url)->status_line, $live->status_line,

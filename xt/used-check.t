@@ -1,4 +1,4 @@
-#!perl -T
+#!perl
 
 use 5.008;
 use strict;
@@ -12,9 +12,7 @@ plan skip_all => 'Set TEST_AUTHOR to enable this test'
 	unless $ENV{'TEST_AUTHOR'} || -e 'inc/.author';
 
 # Required modules for this test
-test_requires 'Test::EOL' => '0.6';
+test_requires 'Test::Module::Used' => '0.1.9';
 
-# Test for Windows EOL and trailing whitespace
-all_perl_files_ok({
-	trailing_whitespace => 1,
-});
+# Test that used in Makefile.PL, META.yml, and files all match
+Test::Module::Used->new->ok;

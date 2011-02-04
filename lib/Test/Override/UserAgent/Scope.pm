@@ -7,7 +7,7 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.002';
+our $VERSION   = '0.003';
 
 ###########################################################################
 # MODULE IMPORTS
@@ -224,7 +224,7 @@ Test::Override::UserAgent::Scope - Scoping the user agent overrides
 
 =head1 VERSION
 
-Version 0.002
+Version 0.003
 
 =head1 SYNOPSIS
 
@@ -235,8 +235,8 @@ Version 0.002
 
 =head1 DESCRIPTION
 
-This module is a used to specify a scope that L<LWP::UserAgent> will be
-overridden with the specified configuration.
+This module is a used to specify a scope that L<LWP::UserAgent|LWP::UserAgent>
+will be overridden with the specified configuration.
 
 =head1 CONSTRUCTOR
 
@@ -263,31 +263,31 @@ L</ATTRIBUTES> section).
 
 =head2 override
 
-This is a L<Test::Override::UserAgent> object that specifies the configuration
-to use for this override.
+This is a L<Test::Override::UserAgent|Test::Override::UserAgent> object that
+specifies the configuration to use for this override.
 
 =head1 METHODS
 
 =head2 scheme_implementor
 
 This takes the name of a scheme and returns the name of the class that will
-implement L<LWP::Protocol> for that scheme.
+implement L<LWP::Protocol|LWP::Protocol> for that scheme.
 
 =head1 DEPENDENCIES
 
 =over 4
 
-=item * L<Carp>
+=item * L<Carp|Carp>
 
-=item * L<LWP::Protocol>
+=item * L<LWP::Protocol|LWP::Protocol>
 
-=item * L<Scalar::Util>
+=item * L<Scalar::Util|Scalar::Util>
 
-=item * L<Sub::Install> 0.90
+=item * L<Sub::Install|Sub::Install> 0.90
 
-=item * L<Sub::Override>
+=item * L<Sub::Override|Sub::Override>
 
-=item * L<namespace::clean> 0.04
+=item * L<namespace::clean|namespace::clean> 0.04
 
 =back
 

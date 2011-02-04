@@ -3,7 +3,6 @@
 use lib 't/lib';
 
 use Test::More tests => 4;
-use Test::Exception 0.03;
 
 use Test::Override::UserAgent for => 'testing';
 

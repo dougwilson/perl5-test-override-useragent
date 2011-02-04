@@ -1,26 +1,20 @@
+Build.PL
 Changes
-inc/Module/Install.pm
-inc/Module/Install/AuthorRequires.pm
-inc/Module/Install/AuthorTests.pm
-inc/Module/Install/Base.pm
-inc/Module/Install/Can.pm
-inc/Module/Install/Fetch.pm
-inc/Module/Install/Makefile.pm
-inc/Module/Install/Metadata.pm
-inc/Module/Install/Win32.pm
-inc/Module/Install/WriteAll.pm
 lib/Test/Override/UserAgent.pm
+lib/Test/Override/UserAgent/Manual/ConfigurationPackage.pod
 lib/Test/Override/UserAgent/Scope.pm
-Makefile.PL
+LICENSE
 MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
 t/bad_handlers.t
+t/configuration_with_defaults.t
 t/constructor.t
 t/from_configuration.t
 t/handle_request.t
 t/lib/MyUAConfig.pm
+t/lib/MyUAConfigDefaults.pm
 t/lib/MyUAConfigLive.pm
 t/live_restriction.t
 t/psgi.t
@@ -38,3 +32,4 @@ xt/perl-version.t
 xt/perlcriticrc
 xt/pod-coverage.t
 xt/pod.t
+xt/used-check.t
