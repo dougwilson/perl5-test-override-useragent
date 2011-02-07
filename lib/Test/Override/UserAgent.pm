@@ -263,8 +263,16 @@ sub _register_handler {
 	my ($self, $handler, %args) = @_;
 
 	# Add m_ to the beginning of the arguments
-	foreach my $key (keys %args) {
-		if ($key !~ m{\A m_}msx) {
+	for my $key (keys %args) {
+		# Specially handle "url" key as HTTP::Config does not
+		if ($key eq 'url' || $key eq 'uri') {
+			# Get the URI from the arguments
+			my $uri = URI->new(delete $args{$key});
+
+			# Set a match against it's canonical value
+			$args{m_uri__canonical} = $uri->canonical;
+		}
+		elsif (q{m_} ne substr $key, 0, 2) {
 			# Add m_
 			$args{"m_$key"} = delete $args{$key};
 		}
@@ -623,7 +631,20 @@ is C<0> to not clone the user agent.
 This will add a new request override to the configuration. The argument is a
 plain hash with the keys that L<HTTP::Config|HTTP::Config> takes as specified in
 L<HTTP::Config/Matching>. The keys may leave off the C<m_> prefix. The
-subroutine must function as specified in L</HANDLER SUBROUTINE>.
+subroutine must function as specified in L</HANDLER SUBROUTINE>. Some
+short-hands are provided as follows:
+
+=over 4
+
+=item C<uri> or C<url>
+
+These are not supported directly by L<HTTP::Config|HTTP::Config> but will be
+translated to a L<HTTP::Config|HTTP::Config>-compatible syntax for you. This
+allows you to do the following:
+
+  $config->override_request(url => 'http://exmaple.org/search', \&search_handler);
+
+=back
 
 =head2 uninstall_from_user_agent
 
