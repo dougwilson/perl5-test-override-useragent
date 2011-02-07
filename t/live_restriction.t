@@ -1,8 +1,11 @@
 #!perl -T
 
+use lib 't/lib';
+
 use Test::More tests => 9;
 
 use LWP::UserAgent;
+use MyUtil;
 use Test::Override::UserAgent for => 'testing';
 
 my $live_url = 'http://www.cpan.org/authors/02STAMP';
@@ -45,14 +48,25 @@ ok $conf->allow_live_requests,
 
 SKIP: {
 	# Test for seeing if we can do live
-	my $live = LWP::UserAgent->new(timeout => 2)->get($live_url);
+	my $live = try_get(LWP::UserAgent->new(timeout => 2) => $live_url);
 
-	if ($live->code != 200) {
+	if (!defined $live || $live->code != 200) {
 		skip "Unable to fetch $live_url", 4;
 	}
 
-	is $ua->get($live_url)->status_line, $live->status_line,
-		'Live request went through';
+	SKIP: {
+		# Try and get the live URL through our hooked UA
+		my $live_response = try_get($ua => $live_url);
+
+		if (!defined $live_response) {
+			# Live response didn't work this time for some reason
+			skip "Unable to fetch $live_url", 1;
+		}
+
+		# Compare the status lines (should be a reliable comparison)
+		is $live_response->status_line, $live->status_line,
+			'Live request went through';
+	}
 
 	# Remove hooks from the UA
 	$conf->uninstall_from_user_agent($ua);
@@ -65,13 +79,24 @@ SKIP: {
 		# Install in the scope
 		my $scope = $conf->install_in_scope;
 
-		is $ua->get($live_url)->status_line, $live->status_line,
-			'Live request went through in scope install';
+		SKIP: {
+			# Try and get the live URL through our hooked UA
+			my $live_response = try_get($ua => $live_url);
+
+			if (!defined $live_response) {
+				# Live response didn't work this time for some reason
+				skip "Unable to fetch $live_url", 1;
+			}
+
+			# Compare the status lines (should be a reliable comparison)
+			is $live_response->status_line, $live->status_line,
+				'Live request went through in scope install';
+		}
 
 		# Turn off live requests
 		$conf->allow_live_requests(0);
 
-		isnt $ua->get($live_url)->status_line, $live->status_line,
+		ok is_tau_response($ua->get($live_url)),
 			'Live request allow changed without removing scope install';
 	}
 }
