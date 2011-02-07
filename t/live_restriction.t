@@ -1,6 +1,6 @@
 #!perl -T
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 
 use LWP::UserAgent;
 use Test::Override::UserAgent for => 'testing';
@@ -23,9 +23,19 @@ $ua = $conf->install_in_user_agent($ua);
 ok !$conf->allow_live_requests,
 	'Default allow live requests is false';
 
-is $ua->get($live_url)->status_line,
-	'404 Not Found (No Live Requests)',
-	'Unable to make live request';
+{
+	my $response = $ua->get($live_url);
+
+	is $response->status_line,
+		'404 Not Found (No Live Requests)',
+		'Unable to make live request; status line correct';
+	is(scalar $response->header('Client-Warning'),
+		'Internal response',
+		'Unable to make live request; internal response indicated');
+	is(scalar $response->header('Client-Response-Source'),
+		'Test::Override::UserAgent',
+		'Unable to make live request; response source indicated');
+}
 
 # Turn on live requests
 $conf->allow_live_requests(1);
