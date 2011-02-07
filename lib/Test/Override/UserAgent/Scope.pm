@@ -7,7 +7,7 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.003';
+our $VERSION   = '0.004';
 
 ###########################################################################
 # MODULE IMPORTS
@@ -224,7 +224,7 @@ Test::Override::UserAgent::Scope - Scoping the user agent overrides
 
 =head1 VERSION
 
-Version 0.003
+Version 0.004
 
 =head1 SYNOPSIS
 

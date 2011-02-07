@@ -16,7 +16,9 @@ t/handle_request.t
 t/lib/MyUAConfig.pm
 t/lib/MyUAConfigDefaults.pm
 t/lib/MyUAConfigLive.pm
+t/lib/MyUtil.pm
 t/live_restriction.t
+t/override_request_url.t
 t/psgi.t
 t/psgi_validate.t
 t/scope.t
