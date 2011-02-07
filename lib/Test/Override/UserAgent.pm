@@ -7,7 +7,7 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.003';
+our $VERSION   = '0.004';
 
 ###########################################################################
 # MODULE IMPORTS
@@ -457,7 +457,7 @@ Test::Override::UserAgent - Override the LWP::UserAgent to return canned respons
 
 =head1 VERSION
 
-Version 0.003
+Version 0.004
 
 =head1 SYNOPSIS
 
@@ -637,6 +637,8 @@ short-hands are provided as follows:
 =over 4
 
 =item C<uri> or C<url>
+
+B<Added in version 0.004>; be sure to require this version for this feature.
 
 These are not supported directly by L<HTTP::Config|HTTP::Config> but will be
 translated to a L<HTTP::Config|HTTP::Config>-compatible syntax for you. This

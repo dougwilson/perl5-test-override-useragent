@@ -7,6 +7,7 @@ build_requires:
   HTTP::Response: 0
   IO::String: 0
   LWP::UserAgent: 0
+  Sub::Install: 0.90
   Test::Fatal: 0
   Test::More: 0
   Test::Requires: 0.02
@@ -26,10 +27,10 @@ no_index:
 provides:
   Test::Override::UserAgent:
     file: lib/Test/Override/UserAgent.pm
-    version: 0.003
+    version: 0.004
   Test::Override::UserAgent::Scope:
     file: lib/Test/Override/UserAgent/Scope.pm
-    version: 0.003
+    version: 0.004
 requires:
   Carp: 0
   Clone: 0
@@ -51,4 +52,4 @@ resources:
   homepage: http://github.com/dougwilson/perl5-test-override-useragent/
   license: http://dev.perl.org/licenses/
   repository: git://github.com/dougwilson/perl5-test-override-useragent.git
-version: 0.003
+version: 0.004

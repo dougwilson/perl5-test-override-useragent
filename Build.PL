@@ -25,6 +25,7 @@ my $build = Module::Build->new(
 		'HTTP::Response'  => 0,
 		'IO::String'      => 0,
 		'LWP::UserAgent'  => 0,
+		'Sub::Install'    => '0.90',
 		'Test::Fatal'     => 0,
 		'Test::More'      => 0,
 		'Test::Requires' => '0.02',
