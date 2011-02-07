@@ -14,5 +14,13 @@ plan skip_all => 'Set TEST_AUTHOR to enable this test'
 # Required modules for this test
 test_requires 'Test::Module::Used' => '0.1.9';
 
+# Make the testing object (and include xt/ tests since they are always run)
+my $used = Test::Module::Used->new(
+	test_dir => ['t', 'xt'],
+);
+
+# These are not actually required btu fool Kwalitee check
+$used->push_exclude_in_testdir(qw[Test::Pod::Coverage Test::Pod]);
+
 # Test that used in Makefile.PL, META.yml, and files all match
-Test::Module::Used->new->ok;
+$used->ok;
