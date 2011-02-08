@@ -27,7 +27,7 @@ my $build = Module::Build->new(
 		'LWP::UserAgent'  => 0,
 		'Sub::Install'    => '0.90',
 		'Test::Fatal'     => 0,
-		'Test::More'      => 0,
+		'Test::More'     => '0.88',
 		'Test::Requires' => '0.02',
 	},
 
@@ -57,7 +57,7 @@ my $build = Module::Build->new(
 	# Create a LICENSE file
 	create_license => 1,
 
-	test_files => 't/*.t xt/*.t',
+	test_files => 't/*.t t/*/*.t xt/*.t',
 );
 
 $build->create_build_script;

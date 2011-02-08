@@ -18,7 +18,12 @@ t/lib/MyUAConfigDefaults.pm
 t/lib/MyUAConfigLive.pm
 t/lib/MyUtil.pm
 t/live_restriction.t
-t/override_request_url.t
+t/override_request/host.t
+t/override_request/method.t
+t/override_request/path.t
+t/override_request/port.t
+t/override_request/scheme.t
+t/override_request/url.t
 t/psgi.t
 t/psgi_validate.t
 t/scope.t
