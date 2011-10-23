@@ -19,7 +19,12 @@ my $build = Module::Build->new(
 		},
 	},
 
-	# Module that are required for tests in t/
+	# Modules that are required for this script
+	configure_requires => {
+		'Module::Build' => '0.31',
+	},
+
+	# Modules that are required for tests in t/
 	build_requires => {
 		'HTTP::Request'   => 0,
 		'HTTP::Response'  => 0,
@@ -31,7 +36,7 @@ my $build = Module::Build->new(
 		'Test::Requires' => '0.02',
 	},
 
-	# Module that are required
+	# Modules that are required
 	requires => {
 		'perl'              => '5.008001',
 		'Carp'              => 0,
