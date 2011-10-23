@@ -65,6 +65,9 @@ my $build = Module::Build->new(
 	# Create a LICENSE file
 	create_license => 1,
 
+	# Sign the distribution
+	sign => 1,
+
 	test_files => 't/*.t t/*/*.t xt/*.t',
 );
 
