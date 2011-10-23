@@ -1,5 +1,10 @@
 Revision history for Perl 5 distribution Test-Override-UserAgent
 
+0.004001 2011-10-23
+ [OTHER]
+ - More documentation.
+ - More tests.
+
 0.004 2011-02-06
  [ENHANCEMENTS]
  - Add a new Client-Response-Source to indicate when the response was
