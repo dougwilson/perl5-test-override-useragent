@@ -7,7 +7,7 @@ use warnings 'all';
 ###########################################################################
 # METADATA
 our $AUTHORITY = 'cpan:DOUGDUDE';
-our $VERSION   = '0.004';
+our $VERSION   = '0.004001';
 
 ###########################################################################
 # MODULE IMPORTS
@@ -457,7 +457,7 @@ Test::Override::UserAgent - Override the LWP::UserAgent to return canned respons
 
 =head1 VERSION
 
-Version 0.004
+This documentation refers to version 0.004001
 
 =head1 SYNOPSIS
 
@@ -628,23 +628,63 @@ is C<0> to not clone the user agent.
 
 =head2 override_request
 
-This will add a new request override to the configuration. The argument is a
-plain hash with the keys that L<HTTP::Config|HTTP::Config> takes as specified in
-L<HTTP::Config/Matching>. The keys may leave off the C<m_> prefix. The
-subroutine must function as specified in L</HANDLER SUBROUTINE>. Some
-short-hands are provided as follows:
+This will add a new request override to the configuration. The arguments
+are a plain hash (C<%matches>) followed by a subroutine reference that will
+return the response.
 
-=over 4
+  $config->override_request(%matches, \&gen_response);
 
-=item C<uri> or C<url>
+The following are they keys you may specify in C<%matches>:
+
+=over
+
+=item C<host>
+
+This is a string of the host of the requested URI. This will cause a match
+if the requested URI has this as the host.
+
+  $request->uri->host eq $host;
+
+=item C<method>
+
+This is a string of the request method to match on. This will cause a match
+if the request uses the specified method; the method should be in uppercase.
+
+  $request->method eq $method;
+
+=item C<path>
+
+This is a string of the path of the requested URI. This will cause a match
+if the requested URI has this as the path.
+
+  $request->uri->path eq $path;
+
+=item C<port>
+
+This is the port number to match on. This will cause a match if the
+requested URI uses the specified port number.
+
+  $request->uri->port == $port;
+
+=item C<scheme>
+
+This is a string of the scheme to match on. This will cause a match if the
+requested URI uses the specified scheme.
+
+  $request->uri->scheme eq $scheme;
+
+=item C<uri>
 
 B<Added in version 0.004>; be sure to require this version for this feature.
 
-These are not supported directly by L<HTTP::Config|HTTP::Config> but will be
-translated to a L<HTTP::Config|HTTP::Config>-compatible syntax for you. This
-allows you to do the following:
+This is a string of the URI to match on. This will cause a match if the
+requested URI is equivilent to this.
 
-  $config->override_request(url => 'http://exmaple.org/search', \&search_handler);
+  $request->uri->canonical eq URI->new($uri)->canonical;
+
+=item C<url>
+
+This is an alias for C<uri> above.
 
 =back
 
